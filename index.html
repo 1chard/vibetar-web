@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Configure your Vibetar guitar GPIOs and whammy over USB or Bluetooth HID, directly in your browser." data-i18n-content="page.description">
+  <title data-i18n="page.title">Vibetar · Guitar editor</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <header class="topbar"><div class="shell header-content">
+    <a class="brand" href="./" aria-label="Vibetar, home" data-i18n-aria-label="brand.home"><span class="brand-mark" aria-hidden="true" data-i18n="brand.mark">V</span><span data-i18n="brand.name">Vibetar</span><span class="brand-suffix" data-i18n="brand.editorSuffix">/ editor</span></a>
+    <span class="board-label"><span data-i18n="brand.boardName">Raspberry Pi Pico W</span> <span class="tag" data-i18n="brand.chipName">RP2040</span></span>
+  <label class="language-control"><span data-i18n="common.language">Language</span><select id="language-select" aria-label="Language" data-i18n-aria-label="common.language"><option value="en" lang="en">English</option><option value="pt-BR" lang="pt-BR">Português (Brasil)</option></select></label></div></header>
+  <main class="shell">
+    <section class="intro"><div><p class="eyebrow" data-i18n="intro.eyebrow">HID GUITAR · CONFIGURATION</p><h1><span data-i18n="intro.title">Your guitar,</span><br><span data-i18n="intro.titleSecondLine">your setup.</span></h1><p class="intro-copy"><span data-i18n="intro.description">Adjust GPIOs and whammy. Save to the Pico and take</span><br class="desktop-break"> <span data-i18n="intro.descriptionSecondLine">your configuration to the next session.</span></p></div>
+      <div class="fret-art" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><div class="fret-line"></div><p data-i18n="intro.slogan">FIVE FRETS. YOUR RULES.</p></div>
+    </section>
+    <section class="connection-card" aria-label="HID connection" data-i18n-aria-label="connection.ariaLabel">
+      <div class="connection-symbol" aria-hidden="true">↳</div><div class="connection-copy"><div class="connection-title"><h2 id="connection-title" data-i18n="connection.title">Connect your guitar</h2><span id="connection-badge" class="status-badge" data-i18n="connection.disconnected">Disconnected</span></div><p id="connection-description" data-i18n="connection.help">Use USB in HID mode, or pair Vibetar Guitar over Bluetooth on your computer and authorize access here.</p></div>
+      <button id="connect" class="button primary" type="button"><span data-i18n="connection.connect">Connect Pico</span> <span aria-hidden="true">↗</span></button>
+      <button id="disconnect" class="button secondary" type="button" hidden data-i18n="connection.disconnect">Disconnect</button>
+    </section>
+    <div class="save-actions"><button id="diagnose-hid" class="button secondary" type="button" data-i18n="connection.diagnose">Diagnose HID</button></div>
+    <details id="hid-diagnostic" class="notice" hidden><summary data-i18n="connection.selectedHid">Selected HID device</summary><pre id="hid-diagnostic-output" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details>
+    <div id="compatibility" class="notice" hidden></div>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <div class="workspace">
+      <aside class="overview">
+        <section class="pin-card"><div class="section-heading"><span class="section-number">01</span><h2 data-i18n="gpio.title">GPIO map</h2></div><p class="muted small" data-i18n="gpio.help">Read all GPIOs, including unused pins. MODE follows the configured USB policy.</p>
+          <div class="chip-label"><span class="chip-icon" aria-hidden="true">▦</span><div><strong data-i18n="brand.picoW">Pico W</strong><span data-i18n="preview.guitarInputs">Guitar inputs</span></div><span class="chip-led" aria-hidden="true"></span></div>
+          <div id="pin-map" class="pin-map" aria-label="Available and assigned GPIOs" data-i18n-aria-label="gpio.mapAriaLabel"></div>
+          <div class="live-panel"><strong id="live-status" data-i18n="gpio.noReading">No live reading</strong><p id="live-active" data-i18n="gpio.connect">Connect the Pico in HID mode.</p><meter id="adc-meter" min="0" max="4095" value="0" aria-label="Raw whammy reading" data-i18n-aria-label="gpio.whammyAriaLabel"></meter><p id="live-adc" data-i18n="gpio.emptyAdc">ADC: —</p></div>
+          <div class="pin-legend"><span><i class="active-dot"></i><span data-i18n="gpio.lowLevel">Level 0</span></span><span><i class="used-dot"></i><span data-i18n="gpio.inUse">In use</span></span><span><i class="free-dot"></i><span data-i18n="gpio.free">Free</span></span><span><i class="adc-dot"></i><span data-i18n="common.adc">ADC</span></span></div>
+          <p class="map-note" data-i18n="gpio.wiringHelp">Numbers are GPIOs, not physical header positions. Wire buttons between GPIO and GND.</p>
+        </section>
+        <section class="storage-card"><span class="storage-icon" aria-hidden="true">▤</span><h3 data-i18n="storage.title">Saved on your guitar</h3><p data-i18n="storage.persistenceHelp">Settings stay in Pico flash, even after power-off.</p><div class="storage-divider"></div><p><span data-i18n="storage.editIn">Edit in</span> <strong data-i18n="mode.hid">HID</strong><span data-i18n="storage.profilesPrefix">. The values are also used in</span> <strong data-i18n="mode.guitarHero">Guitar Hero</strong> <span data-i18n="common.and">and</span> <strong data-i18n="mode.rockBandXinput">Rock Band XInput</strong>.</p></section>
+        <section class="device-tools"><h3 data-i18n="device.title">Device</h3><button id="restart" class="button secondary" type="button" disabled data-i18n="device.restart">Restart Pico</button><button id="bootsel" class="button secondary" type="button" disabled data-i18n="device.bootsel">Enter BOOTSEL</button><p id="device-tools-note" class="small muted" data-i18n="device.connectHelp">Connect the Pico to check available features.</p></section>
+        <div class="file-tools"><button id="import" class="text-button" type="button" data-i18n="config.import">↑ Import JSON</button><button id="export" class="text-button" type="button" data-i18n="config.export">↓ Export JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden></div>
+      </aside>
+      <form id="config-form" novalidate>
+        <section class="editor-card" id="controller-preview">
+          <div class="section-heading"><h2 data-i18n="preview.title">Controller preview</h2><span id="preview-source" class="section-detail"></span></div>
+          <p id="preview-status" class="small muted" role="status" data-i18n="preview.connect">Connect the Pico to preview the controls.</p>
+          <div id="preview-frets" class="preview-frets"></div>
+          <div id="preview-controls" class="preview-controls"></div>
+          <p class="small muted" data-i18n="preview.soloFrets">Solo frets</p><div id="preview-solo" class="preview-frets"></div>
+          <div class="preview-analog"><label><span data-i18n="common.whammy">Whammy</span> <output id="preview-whammy-value">0%</output><meter id="preview-whammy" min="0" max="65535" value="0"></meter></label><span id="preview-pickup" data-i18n="preview.effectsDisabled">Effects selector: disabled</span></div>
+        </section>
+        <fieldset id="editor-fields" disabled>
+          <section class="editor-card"><div class="section-heading"><span class="section-number">02</span><h2 data-i18n="controls.fretsTitle">Fret buttons</h2><span class="section-detail" data-i18n="controls.fretCount">5 FRETS</span></div><p class="muted small" data-i18n="controls.fretsHelp">Choose a GPIO for each color.</p><div id="frets" class="fret-fields"></div></section>
+          <section class="editor-card"><div class="section-heading"><span class="section-number">03</span><h2 data-i18n="controls.strumTitle">Strum and controls</h2></div><p class="muted small" data-i18n="controls.strumHelp">Each input needs its own GPIO. The Tilt button can be Disabled when using an ADC or accelerometer.</p><div id="controls" class="control-fields"></div></section>
+          <section class="editor-card"><div class="section-heading"><span class="section-number">04</span><h2 data-i18n="common.whammy">Whammy</h2><label class="toggle-label"><input id="whammy-enabled" type="checkbox"><span data-i18n="common.enabled">Enabled</span></label></div><p class="muted small" data-i18n="whammy.help">Set the potentiometer limits to use its full travel.</p>
+            <div class="whammy-fields"><label class="field"><span data-i18n="whammy.analogGpio">Analog GPIO</span><select id="whammy-gpio"><option value="26" data-i18n="gpio.adc0">GP26 · ADC0</option><option value="27" data-i18n="gpio.adc1">GP27 · ADC1</option><option value="28" data-i18n="gpio.adc2">GP28 · ADC2</option></select></label><label class="field"><span data-i18n="common.minimum">Minimum</span><input id="whammy-min" type="number" min="0" max="4095" step="1" inputmode="numeric"></label><label class="field"><span data-i18n="common.maximum">Maximum</span><input id="whammy-max" type="number" min="0" max="4095" step="1" inputmode="numeric"></label><label class="field"><span data-i18n="common.deadZone">Dead zone</span><input id="whammy-deadzone" type="number" min="0" max="4095" step="1" inputmode="numeric"></label></div>
+            <div class="calibration-track" aria-hidden="true"><div id="calibration-range"></div></div><div class="calibration-labels"><span>0</span><span data-i18n="whammy.adcRange">ADC range</span><span>4095</span></div>
+            <label class="checkbox-label"><input id="whammy-inverted" type="checkbox"><span data-i18n="whammy.invert">Invert whammy direction</span></label><p class="small muted whammy-note" data-i18n="whammy.wiringHelp">Connect the potentiometer ends to 3V3 and GND. Connect the wiper to the analog GPIO.</p>
+          </section>
+        </fieldset>
+        <section class="editor-card" id="extras-card">
+          <div class="section-heading"><span class="section-number">05</span><h2 data-i18n="extras.title">Optional inputs</h2></div>
+          <p class="small muted" id="extras-note" data-i18n="extras.connectHelp">Connect the Pico to check these options.</p>
+          <fieldset id="extras-fields" disabled>
+            <h3 data-i18n="extras.soloTitle">D-pad and solo</h3><p class="small muted" data-i18n="extras.soloHelp">Up/down remain on the strum. For solo, hold the modifier with a normal fret, use dedicated buttons for each color, or combine both options. In Rock Band, a solo fret makes all frets pressed at the same time register as solo.</p>
+            <div id="extras-digital" class="control-fields"></div>
+            <h3 data-i18n="extras.effectsTitle">Rock Band effects selector</h3><p class="small muted" data-i18n="extras.effectsHelp">Potentiometer or five-position selector over ADC. Connect the ends to 3V3 and GND, and the wiper to the ADC. Calibrate using live values on the map.</p>
+            <div class="whammy-fields"><label class="field"><span data-i18n="extras.effectsAdc">Effects ADC</span><select id="pickup-gpio"><option value="255" data-i18n="common.disabled">Disabled</option><option value="26" data-i18n="gpio.adc0">GP26 · ADC0</option><option value="27" data-i18n="gpio.adc1">GP27 · ADC1</option><option value="28" data-i18n="gpio.adc2">GP28 · ADC2</option></select></label><label class="field"><span data-i18n="common.minimum">Minimum</span><input id="pickup-min" type="number" min="0" max="4095" step="1" value="0"></label><label class="field"><span data-i18n="common.maximum">Maximum</span><input id="pickup-max" type="number" min="0" max="4095" step="1" value="4095"></label></div>
+            <label class="checkbox-label"><input id="pickup-calibrated" type="checkbox"><span data-i18n="extras.calibratePositions">Calibrate five positions (nonlinear selector)</span></label>
+            <div id="pickup-values-fields" hidden>
+              <p class="small muted" data-i18n="extras.calibrationHelp">Place the selector in each position and capture the ADC, or enter the value. The firmware chooses the nearest reference. All five values must differ and can be in any order.</p>
+              <div id="pickup-values" class="control-fields"></div>
+            </div>
+            <label class="checkbox-label"><input id="pickup-inverted" type="checkbox"><span data-i18n="extras.invertEffects">Invert effects selector</span></label>
+          </fieldset>
+          <p id="extras-live" class="small muted" data-i18n="extras.effectsDisabled">Effects: disabled</p>
+          <div id="extras-validation" class="validation" role="alert" hidden></div>
+          <div class="save-actions"><button id="extras-save" type="button" class="button primary" disabled data-i18n="extras.save">Save options to Pico</button><button id="extras-clear" type="button" class="button secondary" disabled data-i18n="extras.disable">Disable options</button></div>
+          <p class="small muted" data-i18n="extras.saveHelp">Save these options separately from the basic buttons. Solo and effects use specific encoding in Rock Band mode.</p>
+        </section>
+        <section class="editor-card" id="tilt-card">
+          <div class="section-heading"><span class="section-number">06</span><h2 data-i18n="controls.tilt">Tilt / Star Power</h2></div>
+          <p id="tilt-note" class="small muted" data-i18n="tilt.connectHelp">Connect updated firmware to configure tilt.</p>
+          <fieldset id="tilt-fields" disabled>
+            <label class="field"><span data-i18n="tilt.source">Tilt source</span><select id="tilt-source"><option value="0" data-i18n="tilt.digitalSource">Digital button (default)</option><option value="1" data-i18n="common.adc">ADC</option><option value="2" data-i18n="tilt.accelerometerSource">ADXL345 accelerometer · I²C</option></select></label>
+            <div id="tilt-adc-fields" class="whammy-fields" hidden><label class="field"><span data-i18n="tilt.adcGpio">GPIO ADC</span><select id="tilt-adc"><option value="26" data-i18n="gpio.gp26">GP26</option><option value="27" data-i18n="gpio.gp27">GP27</option><option value="28" data-i18n="gpio.gp28">GP28</option></select></label></div>
+            <div id="tilt-i2c-fields" class="control-fields" hidden>
+              <label class="field"><span data-i18n="tilt.i2cPins">SDA / SCL</span><select id="tilt-i2c"></select></label>
+              <label class="field"><span data-i18n="tilt.i2cAddress">I²C address</span><select id="tilt-address"><option value="83" data-i18n="tilt.addressGround">0x53 · SDO to GND</option><option value="29" data-i18n="tilt.address3v3">0x1D · SDO to 3V3</option></select></label>
+              <label class="field"><span data-i18n="tilt.axis">Axis</span><select id="tilt-axis"><option value="0" data-i18n="common.axisX">X</option><option value="1" data-i18n="common.axisY">Y</option><option value="2" data-i18n="common.axisZ">Z</option></select></label>
+            </div>
+            <div id="tilt-threshold-fields" class="control-fields" hidden>
+              <label class="field"><span data-i18n="tilt.activateWhen">Activate when</span><select id="tilt-below"><option value="0" data-i18n="tilt.aboveThreshold">Value ≥ threshold</option><option value="1" data-i18n="tilt.belowThreshold">Value ≤ threshold</option></select></label>
+              <label class="field"><span id="tilt-unit" data-i18n="tilt.threshold">Threshold</span><input id="tilt-threshold" type="number" step="1"></label>
+              <label class="field"><span data-i18n="tilt.hysteresis">Hysteresis</span><input id="tilt-hysteresis" type="number" min="0" step="1"></label>
+            </div>
+            <p id="tilt-help" class="small muted" data-i18n="tilt.buttonHelp">The button uses the Tilt GPIO configured in Strum and controls.</p>
+          </fieldset>
+          <p id="tilt-live" class="small muted" data-i18n="tilt.noReading">Tilt: no live reading.</p>
+          <label class="checkbox-label"><input id="accelerometer-show" type="checkbox"><span data-i18n="accelerometer.show">Show accelerometer values</span></label>
+          <div id="accelerometer-panel" class="live-panel" hidden>
+            <strong data-i18n="accelerometer.title">ADXL345 · live axes</strong>
+            <p id="accelerometer-status" data-i18n="accelerometer.connect">Connect the Pico in HID mode to see the values.</p>
+            <div class="accelerometer-axes">
+              <div><span data-i18n="accelerometer.axisX">X axis</span><output id="accelerometer-x">—</output><meter id="accelerometer-x-meter" min="-16000" max="16000" value="0" aria-label="X-axis acceleration in milli-g" data-i18n-aria-label="accelerometer.axisXAriaLabel"></meter></div>
+              <div><span data-i18n="accelerometer.axisY">Y axis</span><output id="accelerometer-y">—</output><meter id="accelerometer-y-meter" min="-16000" max="16000" value="0" aria-label="Y-axis acceleration in milli-g" data-i18n-aria-label="accelerometer.axisYAriaLabel"></meter></div>
+              <div><span data-i18n="accelerometer.axisZ">Z axis</span><output id="accelerometer-z">—</output><meter id="accelerometer-z-meter" min="-16000" max="16000" value="0" aria-label="Z-axis acceleration in milli-g" data-i18n-aria-label="accelerometer.axisZAriaLabel"></meter></div>
+            </div>
+            <p class="small muted" data-i18n="accelerometer.unitsHelp">1000 milli-g = 1 g. Readings use the saved configuration; save ADXL345 as the tilt source to enable the sensor.</p>
+          </div>
+          <div id="tilt-validation" class="validation" role="alert" hidden></div>
+          <button id="tilt-save" class="button primary" type="button" disabled data-i18n="tilt.save">Save tilt to Pico</button>
+        </section>
+        <section class="editor-card" id="host-card">
+          <div class="section-heading"><span class="section-number">07</span><h2 data-i18n="host.title">Host and USB modes</h2></div>
+          <p id="host-note" class="small muted" data-i18n="host.connectHelp">Connect updated firmware to configure modes.</p>
+          <fieldset id="host-fields" disabled><div class="control-fields">
+            <label class="field"><span data-i18n="host.policy">Policy</span><select id="host-policy"><option value="0" data-i18n="host.automatic">Automatic</option><option value="1" data-i18n="host.pcAllModes">PC · all modes</option><option value="2" data-i18n="host.xinputOnly">XInput only</option></select></label>
+            <label class="field"><span data-i18n="host.bootProfile">Xbox / XInput profile</span><select id="host-boot"><option value="0" data-i18n="mode.guitarHero">Guitar Hero</option><option value="1" data-i18n="mode.rockBand">Rock Band</option></select></label>
+          </div></fieldset>
+          <p class="small muted" data-i18n="host.policyHelp">Automatic starts in HID. Only an Xbox 360 XSM3 signature selects the XInput profile and limits MODE to Guitar Hero ↔ Rock Band. An unknown host keeps all three modes; there is no timeout-based switch. If Xbox does not request XSM3 in HID, use MODE or XInput only. The selected XInput profile applies to detection and startup in XInput only.</p>
+          <p class="small muted"><strong data-i18n="host.recoveryTitle">Editor access:</strong> <span data-i18n="host.recoveryHelp">hold Start + Back when powering on the Pico, without MODE. This forces USB HID and enables all three modes for that session only, without changing saved settings. The Bluetooth editor connection remains available in any USB mode.</span></p>
+          <p id="host-live" class="small muted" data-i18n="host.noReading">Host: no reading.</p>
+          <div id="host-validation" class="validation" role="alert" hidden></div>
+          <button id="host-save" class="button primary" type="button" disabled data-i18n="host.save">Save USB policy to Pico</button>
+        </section>
+        <section class="editor-card" id="outputs-card">
+          <div class="section-heading"><span class="section-number">08</span><h2 data-i18n="outputs.title">Event LEDs</h2></div>
+          <p id="outputs-note" class="small muted" data-i18n="outputs.connectHelp">Connect updated firmware to configure outputs.</p>
+          <fieldset id="outputs-fields" disabled><div id="outputs-rows"></div></fieldset>
+          <p class="small muted" data-i18n="outputs.help">Select multiple events for the same LED output. Priority: low battery, selected Bluetooth state, USB mode. The Bluetooth state keeps its blink pattern, including off intervals. Waiting (radio active without discovery or connection) pulses every 3 seconds. Searching: dim blink (13%) every 1.6 s. Connecting/pairing: bright blink every 0.3 s. Full status combines these effects and stays on when connected; Bluetooth off turns the LED off. Effects require updated firmware and work on the guitar and Pico W receiver. Onboard LED needs no external LED: on Pico W it blinks slowly or quickly at fixed brightness; on standard Pico it uses GP25 and supports PWM. The warning needs the battery monitor enabled and is suspended when VBUS is present. Save before switching to XInput. Disabled frees the GPIO. Use an external LED with a series resistor; GPIOs use 3V3. Do not connect an output directly to GND.</p>
+          <p id="outputs-live" class="small muted" data-i18n="outputs.noReading">LEDs: no live reading.</p>
+          <div id="outputs-validation" class="validation" role="alert" hidden></div>
+          <button id="outputs-save" class="button primary" type="button" disabled data-i18n="outputs.save">Save LEDs to Pico</button>
+        </section>
+        <section class="editor-card" id="battery-card">
+          <div class="section-heading"><span class="section-number">09</span><h2 data-i18n="battery.title">Low battery · VSYS</h2></div>
+          <p id="battery-note" class="small muted" data-i18n="battery.connectHelp">Connect updated firmware to configure the battery.</p>
+          <fieldset id="battery-fields" disabled>
+            <label class="checkbox-label"><input id="battery-enabled" type="checkbox"><span data-i18n="battery.enableMonitor">Enable battery monitor</span></label>
+            <div class="control-fields">
+              <label class="field"><span data-i18n="battery.threshold">Low-battery threshold (mV)</span><input id="battery-threshold" type="number" min="2000" max="4500" step="1"></label>
+              <label class="field"><span data-i18n="battery.hysteresis">Hysteresis (mV)</span><input id="battery-hysteresis" type="number" min="0" max="1000" step="1"></label>
+              <label class="field"><span data-i18n="battery.diodeCorrection">Diode voltage-drop correction (mV)</span><input id="battery-diode" type="number" min="0" max="1000" step="1"></label>
+            </div>
+          </fieldset>
+          <p class="small muted" data-i18n="battery.measurementHelp">Measures VSYS internally without occupying GP26–GP28. The battery estimate adds diode correction to the VSYS voltage. Adjust using a multimeter. 1000 mV = 1 V. For a single-cell lithium battery; the initial threshold is adjustable and does not replace discharge protection.</p>
+          <p class="small muted" data-i18n="battery.usbHelp">With USB/VBUS power present, the warning is suspended and VSYS is not shown as battery voltage. The TP4056 charging circuit is not monitored. To use a warning LED, select Low battery in Event LEDs and save both sections.</p>
+          <div class="live-panel"><strong id="battery-live-status" data-i18n="battery.noReading">Battery: no live reading.</strong><p id="battery-live-voltage" data-i18n="battery.emptyVoltage">VSYS: — · Battery: —</p></div>
+          <div id="battery-validation" class="validation" role="alert" hidden></div>
+          <button id="battery-save" class="button primary" type="button" disabled data-i18n="battery.save">Save battery to Pico</button>
+        </section>
+        <section class="editor-card" id="bluetooth-card" hidden>
+          <div class="section-heading"><span class="section-number">10</span><h2 id="bluetooth-heading" data-i18n="bluetooth.title">Bluetooth HID · Pico W</h2></div>
+          <p id="receiver-note" class="small muted" hidden data-i18n="receiver.help">This firmware receives an updated Vibetar guitar and sends controls over USB HID, Guitar Hero XInput, or Rock Band XInput. Open pairing on the guitar, click Search guitars below, and choose Connect guitar; the receiver saves the bond after receiving controls and reconnects automatically. The GPIOs, ADCs, and LEDs shown here belong to the receiver. Configure buttons and sensors on the guitar itself. Disable guitar USB priority if it stays connected to a host. The receiver accepts one guitar at a time.</p>
+          <p id="bluetooth-note" class="small muted"></p>
+          <fieldset id="bluetooth-fields" disabled>
+            <label class="checkbox-label"><input id="bluetooth-enabled" type="checkbox"><span data-i18n="bluetooth.enable">Enable Bluetooth HID</span></label>
+            <label class="checkbox-label"><input id="bluetooth-priority" type="checkbox"><span data-i18n="bluetooth.prioritizeUsb">Prioritize USB when connected to a host</span></label>
+          </fieldset>
+          <p id="bluetooth-help" class="small muted" data-i18n="bluetooth.pairingHelp">Pair “Vibetar Guitar” in your computer's Bluetooth settings. Enabling Bluetooth or starting with it saved allows new pairing for 120 seconds. Previously paired devices can then reconnect. The guitar accepts one Bluetooth link at a time and stops advertising while connected. Opening pairing closes the current link after 3 seconds and makes the guitar available again; disconnect the previous host to prevent automatic reconnection. Bluetooth uses HID; Guitar Hero and Rock Band XInput remain available over USB.</p>
+          <p id="bluetooth-usb-help" class="small muted" data-i18n="bluetooth.usbHelp">With USB priority, Bluetooth stays connected and sends neutral controls while USB is enumerated. A USB charger without a host does not pause controls. The editor also works over Bluetooth HID when the system exposes the configuration collection to WebHID. Pair on the computer first, then click Connect Pico. Initially enable Bluetooth over USB.</p>
+          <div id="receiver-discovery" hidden>
+            <h3 data-i18n="discovery.title">Guitars found by the receiver</h3>
+            <p class="small muted" data-i18n="discovery.help">Connect this receiver to the editor over USB. Open pairing on the guitar and click Search guitars. The list comes from the receiver radio without using the computer's Bluetooth. To switch guitars, disconnect the current link. A guitar already connected to the computer is unavailable to the receiver.</p>
+            <button id="receiver-search" class="button secondary" type="button" disabled data-i18n="discovery.search">Search guitars</button>
+            <p id="receiver-scan-status" class="small muted" role="status"></p>
+            <div id="receiver-devices"></div>
+          </div>
+          <div class="live-panel"><strong id="bluetooth-live" data-i18n="bluetooth.noReading">Bluetooth: no live reading.</strong><p id="bluetooth-details" class="small muted"></p><p id="bluetooth-link" class="small muted"></p>
+            <button id="bluetooth-copy" class="button secondary" type="button" disabled data-i18n="diagnostics.copy">Copy diagnostics</button>
+            <span id="bluetooth-copy-status" class="small muted" role="status" aria-live="polite"></span>
+            <label id="bluetooth-copy-fallback" class="field" hidden><span data-i18n="diagnostics.selectToCopy">Select and copy the diagnostics below with Ctrl+C.</span><textarea id="bluetooth-copy-text" rows="8" readonly aria-label="Bluetooth diagnostics to copy" data-i18n-aria-label="diagnostics.copyAriaLabel"></textarea></label>
+          </div>
+          <button id="bluetooth-save" class="button primary" type="button" disabled data-i18n="bluetooth.save">Save Bluetooth to Pico</button>
+          <div class="save-actions"><button id="bluetooth-pair" class="button secondary" type="button" disabled data-i18n="bluetooth.openPairing">Open pairing</button><button id="bluetooth-forget" class="button secondary" type="button" disabled data-i18n="bluetooth.forgetBonds">Delete bonds</button><button id="bluetooth-disconnect" class="button secondary" type="button" disabled data-i18n="bluetooth.disconnect">Disconnect Bluetooth</button></div>
+        </section>
+        <div id="validation" class="validation" role="alert" hidden></div>
+        <div class="save-bar"><div><strong id="save-state" data-i18n="state.waiting">Waiting for connection</strong><p id="save-description" data-i18n="state.readFirst">Read the Pico configuration to get started.</p></div><div class="save-actions"><button id="read" type="button" class="button secondary" disabled data-i18n="config.read">Read from Pico</button><button id="save" type="submit" class="button primary" disabled data-i18n="config.save">Save to Pico</button></div></div>
+        <div class="reset-line"><span data-i18n="config.applyHelp">Changes are applied without restarting the Pico.</span><button id="reset" type="button" class="text-button" disabled data-i18n="config.reset">Restore defaults</button></div>
+      </form>
+    </div>
+    <footer><span><span data-i18n="brand.name">Vibetar</span> <span class="footer-dot">·</span> <span data-i18n="footer.tagline">Made to play</span></span><span><span data-i18n="footer.localTransport">Local USB / Bluetooth</span> <span class="footer-dot">·</span> <span data-i18n="footer.privacy">No configuration sent to the internet</span></span></footer>
+  </main>
+  <dialog id="confirm-dialog"><h2 id="dialog-title"></h2><p id="dialog-description"></p><div class="dialog-actions"><button id="dialog-cancel" type="button" class="button secondary" data-i18n="common.cancel">Cancel</button><button id="dialog-confirm" type="button" class="button primary" data-i18n="common.continue">Continue</button></div></dialog>
+</body>
+</html>
